@@ -8,7 +8,6 @@ import { textProperty } from "ui/text-base";
 export * from "./editable-text-base-common";
 
 import { UpdateTextTrigger, KeyboardType, ReturnKeyType, AutocapitalizationType } from "ui/enums";
-import { toUIString } from "utils/types";
 import * as utils from "utils/utils";
 
 @Interfaces([android.text.TextWatcher])
@@ -117,6 +116,10 @@ export abstract class EditableTextBase extends EditableTextBaseCommon {
         return this._android;
     }
 
+    public abstract _configureEditText(): void;
+
+    public abstract _onReturnPress(): void;
+    
     public _createUI() {
         this._android = new android.widget.EditText(this._context);
         this._configureEditText();
@@ -133,10 +136,6 @@ export abstract class EditableTextBase extends EditableTextBaseCommon {
         this._editorActionListener = this._editorActionListener || new EditorActionListener(weakRef);
         this._android.setOnEditorActionListener(this._editorActionListener);
     }
-
-    public abstract _configureEditText(): void;
-
-    public abstract _onReturnPress(): void;
 
     public _onDetached(force?: boolean) {
         if (this._android) {
@@ -191,7 +190,7 @@ export abstract class EditableTextBase extends EditableTextBaseCommon {
         return this.nativeView.getText();
     }
     set [textProperty.native](value: string) {
-        let newValue = toUIString(value);
+        let newValue = value + '';
         this.nativeView.setText(newValue, android.widget.TextView.BufferType.EDITABLE);
     }
 
@@ -389,6 +388,6 @@ export abstract class EditableTextBase extends EditableTextBaseCommon {
         return this.nativeView.getHint();
     }
     set [hintProperty.native](value: string) {
-        this.nativeView.setHint(toUIString(value));
+        this.nativeView.setHint(value + '');
     }
 }  

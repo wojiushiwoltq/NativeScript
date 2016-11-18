@@ -5,6 +5,7 @@ import * as actionBar from "ui/action-bar";
 import * as gridLayout from "ui/layouts/grid-layout";
 import * as traceModule from "trace";
 import * as colorModule from "color";
+import { DIALOG_FRAGMENT_TAG } from "./constants";
 
 global.moduleMerge(pageCommon, exports);
 
@@ -22,7 +23,7 @@ function ensureColor() {
     }
 }
 
-export var DIALOG_FRAGMENT_TAG = "dialog";
+
 
 interface DialogFragmentClass {
     new (owner: Page, fullscreen: boolean, shownCallback: () => void, dismissCallback: () => void): android.app.DialogFragment;
