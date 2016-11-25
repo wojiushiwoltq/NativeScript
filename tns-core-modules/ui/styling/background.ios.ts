@@ -1,32 +1,19 @@
-import viewModule = require("ui/core/view");
-import common = require("./background-common");
-import * as styleModule from "./style";
+import { Background as BackgroundDefinition } from "ui/styling/background";
+import { View, Point } from "ui/core/view";
+import { cssValueToDevicePixels } from "./background-common";
 import { Color } from "color";
+import { ios as utilsIos } from "utils/utils";
 
-import * as utils from "utils/utils";
-
-global.moduleMerge(common, exports);
-
-var style: typeof styleModule;
-function ensureStyle() {
-    if (!style) {
-        style = require("./style");
-    }
-}
+export * from "./background-common"
 
 export module ios {
-    export function createBackgroundUIColor(view: viewModule.View, flip?: boolean): UIColor {
-        let nativeView = <UIView>view._nativeView; 
-        if (!nativeView) {
-            return undefined;
-        }
-        ensureStyle();
-
-        let background = <common.Background>view.style._getValue(style.backgroundInternalProperty);
-        if (!background || background.isEmpty()) {
+    export function createBackgroundUIColor(view: View, flip?: boolean): UIColor {
+        let background = view.style.backgroundInternal;
+        if (background.isEmpty()) {
             return undefined;
         }
 
+        let nativeView = view._nativeView;
         // Clip-path
         if (background.clipPath) {
             drawClipPath(nativeView, background);
@@ -80,17 +67,17 @@ export module ios {
             let bottom = background.borderBottomWidth;
             let left = background.borderLeftWidth;
             
-            let lto: viewModule.Point = {x: nativeViewLayerBounds.left, y: nativeViewLayerBounds.top};// left-top-outside
-            let lti: viewModule.Point = {x: nativeViewLayerBounds.left + left, y: nativeViewLayerBounds.top + top}; // left-top-inside
+            let lto: Point = {x: nativeViewLayerBounds.left, y: nativeViewLayerBounds.top};// left-top-outside
+            let lti: Point = {x: nativeViewLayerBounds.left + left, y: nativeViewLayerBounds.top + top}; // left-top-inside
 
-            let rto: viewModule.Point = {x: nativeViewLayerBounds.right, y: nativeViewLayerBounds.top}; // right-top-outside
-            let rti: viewModule.Point = {x: nativeViewLayerBounds.right - right, y: nativeViewLayerBounds.top + top}; // right-top-inside
+            let rto: Point = {x: nativeViewLayerBounds.right, y: nativeViewLayerBounds.top}; // right-top-outside
+            let rti: Point = {x: nativeViewLayerBounds.right - right, y: nativeViewLayerBounds.top + top}; // right-top-inside
             
-            let rbo: viewModule.Point = {x: nativeViewLayerBounds.right, y: nativeViewLayerBounds.bottom}; // right-bottom-outside
-            let rbi: viewModule.Point = {x: nativeViewLayerBounds.right - right, y: nativeViewLayerBounds.bottom - bottom}; // right-bottom-inside
+            let rbo: Point = {x: nativeViewLayerBounds.right, y: nativeViewLayerBounds.bottom}; // right-bottom-outside
+            let rbi: Point = {x: nativeViewLayerBounds.right - right, y: nativeViewLayerBounds.bottom - bottom}; // right-bottom-inside
 
-            let lbo: viewModule.Point = {x: nativeViewLayerBounds.left, y: nativeViewLayerBounds.bottom}; // left-bottom-outside
-            let lbi: viewModule.Point = {x: nativeViewLayerBounds.left + left, y: nativeViewLayerBounds.bottom - bottom}; // left-bottom-inside
+            let lbo: Point = {x: nativeViewLayerBounds.left, y: nativeViewLayerBounds.bottom}; // left-bottom-outside
+            let lbi: Point = {x: nativeViewLayerBounds.left + left, y: nativeViewLayerBounds.bottom - bottom}; // left-bottom-inside
             
             if (top > 0 && background.borderTopColor && background.borderTopColor.ios){
                 let topBorderPath = CGPathCreateMutable();
@@ -169,11 +156,11 @@ export module ios {
         }
 
         // We have an image for a background
-        var img = <UIImage>background.image.ios;
-        var params = background.getDrawParams(boundsWidth, boundsHeight);
+        let img = <UIImage>background.image.ios;
+        let params = background.getDrawParams(boundsWidth, boundsHeight);
 
         if (params.sizeX > 0 && params.sizeY > 0) {
-            var resizeRect = CGRectMake(0, 0, params.sizeX, params.sizeY);
+            let resizeRect = CGRectMake(0, 0, params.sizeX, params.sizeY);
             UIGraphicsBeginImageContext(resizeRect.size);
             img.drawInRect(resizeRect);
             img = UIGraphicsGetImageFromCurrentImageContext();
@@ -181,7 +168,7 @@ export module ios {
         }
 
         UIGraphicsBeginImageContextWithOptions(frame.size, false, 0.0);
-        var context = UIGraphicsGetCurrentContext();
+        let context = UIGraphicsGetCurrentContext();
 
         if (background.color && background.color.ios) {
             CGContextSetFillColorWithColor(context, background.color.ios.CGColor);
@@ -192,24 +179,24 @@ export module ios {
             img.drawAtPoint(CGPointMake(params.posX, params.posY));
         }
         else {
-            var w = params.repeatX ? boundsWidth : img.size.width;
-            var h = params.repeatY ? boundsHeight : img.size.height;
+            let w = params.repeatX ? boundsWidth : img.size.width;
+            let h = params.repeatY ? boundsHeight : img.size.height;
 
             CGContextSetPatternPhase(context, CGSizeMake(params.posX, params.posY));
 
             params.posX = params.repeatX ? 0 : params.posX;
             params.posY = params.repeatY ? 0 : params.posY;
 
-            var patternRect = CGRectMake(params.posX, params.posY, w, h);
+            let patternRect = CGRectMake(params.posX, params.posY, w, h);
 
             img.drawAsPatternInRect(patternRect);
         }
 
-        var bkgImage = UIGraphicsGetImageFromCurrentImageContext();
+        let bkgImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
 
         if (flip) {
-            var flippedImage = _flipImage(bkgImage);
+            let flippedImage = _flipImage(bkgImage);
             return UIColor.alloc().initWithPatternImage(flippedImage);
         }
 
@@ -220,22 +207,22 @@ export module ios {
     // https://developer.apple.com/library/ios/documentation/2DDrawing/Conceptual/DrawingPrintingiOS/GraphicsDrawingOverview/GraphicsDrawingOverview.html
     function _flipImage(originalImage: UIImage): UIImage {
         UIGraphicsBeginImageContextWithOptions(originalImage.size, false, 0.0);
-        var context = UIGraphicsGetCurrentContext();
+        let context = UIGraphicsGetCurrentContext();
         CGContextSaveGState(context);
         CGContextTranslateCTM(context, 0.0, originalImage.size.height);
         CGContextScaleCTM(context, 1.0, -1.0);
         originalImage.drawInRect(CGRectMake(0, 0, originalImage.size.width, originalImage.size.height))
         CGContextRestoreGState(context);
-        var flippedImage = UIGraphicsGetImageFromCurrentImageContext();
+        let flippedImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
         return flippedImage;
     }
 }
 
-function drawClipPath(nativeView: UIView, background: common.Background) {
-    var path: any;
+function drawClipPath(nativeView: UIView, background: BackgroundDefinition) {
+    let path: any;
 
-    var bounds = {
+    let bounds = {
         left: nativeView.bounds.origin.x,
         top: nativeView.bounds.origin.y,
         bottom: nativeView.bounds.size.height,
@@ -246,42 +233,42 @@ function drawClipPath(nativeView: UIView, background: common.Background) {
         return;
     }
 
-    var clipPath = background.clipPath;
+    let clipPath = background.clipPath;
 
-    var functionName = clipPath.substring(0, clipPath.indexOf("("));
-    var value = clipPath.replace(`${functionName}(`, "").replace(")", "");
+    let functionName = clipPath.substring(0, clipPath.indexOf("("));
+    let value = clipPath.replace(`${functionName}(`, "").replace(")", "");
 
     if (functionName === "rect") {
-        var arr = value.split(/[\s]+/);
+        let arr = value.split(/[\s]+/);
 
-        var top = common.cssValueToDevicePixels(arr[0], bounds.top);
-        var left = common.cssValueToDevicePixels(arr[1], bounds.left);
-        var bottom = common.cssValueToDevicePixels(arr[2], bounds.bottom);
-        var right = common.cssValueToDevicePixels(arr[3], bounds.right);
+        let top = cssValueToDevicePixels(arr[0], bounds.top);
+        let left = cssValueToDevicePixels(arr[1], bounds.left);
+        let bottom = cssValueToDevicePixels(arr[2], bounds.bottom);
+        let right = cssValueToDevicePixels(arr[3], bounds.right);
 
         path = UIBezierPath.bezierPathWithRect(CGRectMake(left, top, right, bottom)).CGPath;
 
     } else if (functionName === "circle") {
-        var arr = value.split(/[\s]+/);
+        let arr = value.split(/[\s]+/);
 
-        var radius = common.cssValueToDevicePixels(arr[0], (bounds.right > bounds.bottom ? bounds.bottom : bounds.right) / 2);
-        var y = common.cssValueToDevicePixels(arr[2], bounds.bottom);
-        var x = common.cssValueToDevicePixels(arr[3], bounds.right);
+        let radius = cssValueToDevicePixels(arr[0], (bounds.right > bounds.bottom ? bounds.bottom : bounds.right) / 2);
+        let y = cssValueToDevicePixels(arr[2], bounds.bottom);
+        let x = cssValueToDevicePixels(arr[3], bounds.right);
 
         path = UIBezierPath.bezierPathWithArcCenterRadiusStartAngleEndAngleClockwise(CGPointMake(x, y), radius, 0, 360, true).CGPath;
 
     } else if (functionName === "ellipse") {
-        var arr = value.split(/[\s]+/);
+        let arr = value.split(/[\s]+/);
 
-        var rX = common.cssValueToDevicePixels(arr[0], bounds.right);
-        var rY = common.cssValueToDevicePixels(arr[1], bounds.bottom);
-        var cX = common.cssValueToDevicePixels(arr[3], bounds.right);
-        var cY = common.cssValueToDevicePixels(arr[4], bounds.bottom);
+        let rX = cssValueToDevicePixels(arr[0], bounds.right);
+        let rY = cssValueToDevicePixels(arr[1], bounds.bottom);
+        let cX = cssValueToDevicePixels(arr[3], bounds.right);
+        let cY = cssValueToDevicePixels(arr[4], bounds.bottom);
         
-        var left = cX - rX;
-        var top = cY - rY;
-        var width = rX * 2;
-        var height = rY * 2;
+        let left = cX - rX;
+        let top = cY - rY;
+        let width = rX * 2;
+        let height = rY * 2;
 
         path = UIBezierPath.bezierPathWithOvalInRect(CGRectMake(left, top, width, height)).CGPath;
 
@@ -289,13 +276,13 @@ function drawClipPath(nativeView: UIView, background: common.Background) {
 
         path = CGPathCreateMutable()
 
-        var firstPoint: viewModule.Point;
-        var arr = value.split(/[,]+/);
+        let firstPoint: Point;
+        let arr = value.split(/[,]+/);
         for (let i = 0; i < arr.length; i++) {
             let xy = arr[i].trim().split(/[\s]+/);
-            let point: viewModule.Point = {
-                x: common.cssValueToDevicePixels(xy[0], bounds.right),
-                y: common.cssValueToDevicePixels(xy[1], bounds.bottom)
+            let point: Point = {
+                x: cssValueToDevicePixels(xy[0], bounds.right),
+                y: cssValueToDevicePixels(xy[1], bounds.bottom)
             };
 
             if (!firstPoint) {
@@ -310,7 +297,7 @@ function drawClipPath(nativeView: UIView, background: common.Background) {
     }
 
     if (path) {
-        var shape = CAShapeLayer.layer();
+        let shape = CAShapeLayer.layer();
         shape.path = path;
         nativeView.layer.mask = shape;
         nativeView.clipsToBounds = true;
@@ -319,11 +306,11 @@ function drawClipPath(nativeView: UIView, background: common.Background) {
         let borderColor = background.getUniformBorderColor();
 
         if (borderWidth > 0 && borderColor instanceof Color){
-            var borderLayer = CAShapeLayer.layer();
+            let borderLayer = CAShapeLayer.layer();
             borderLayer.path = path;
             borderLayer.lineWidth = borderWidth * 2;
             borderLayer.strokeColor = borderColor.ios.CGColor;
-            borderLayer.fillColor = utils.ios.getter(UIColor, UIColor.clearColor).CGColor;
+            borderLayer.fillColor = utilsIos.getter(UIColor, UIColor.clearColor).CGColor;
             borderLayer.frame = nativeView.bounds;
 
             nativeView.layer.borderColor = undefined;

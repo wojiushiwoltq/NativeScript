@@ -46,7 +46,7 @@
             }
 
             export class BorderDrawable extends android.graphics.drawable.ColorDrawable {
-                constructor(density: number);
+                constructor();
                 public refresh(
                     borderTopColor: number,
                     borderRightColor: number,
