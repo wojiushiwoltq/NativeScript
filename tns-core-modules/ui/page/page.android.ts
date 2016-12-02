@@ -1,36 +1,19 @@
-﻿import pageCommon = require("./page-common");
-import view = require("ui/core/view");
-import enums = require("ui/enums");
-import * as actionBar from "ui/action-bar";
-import * as gridLayout from "ui/layouts/grid-layout";
-import * as traceModule from "trace";
-import * as colorModule from "color";
+﻿import { PageBase, actionBarHiddenProperty, enableSwipeBackNavigationProperty } from "./page-common";
+import { View } from "ui/core/view";
+import { ActionBar } from "ui/action-bar";
+import { GridLayout } from "ui/layouts/grid-layout";
+import { Color } from "color";
 import { DIALOG_FRAGMENT_TAG } from "./constants";
+import * as trace from "trace";
 
-global.moduleMerge(pageCommon, exports);
-
-var trace: typeof traceModule;
-function ensureTrace() {
-    if (!trace) {
-        trace = require("trace");
-    }
-}
-
-var color: typeof colorModule;
-function ensureColor() {
-    if (!color) {
-        color = require("color");
-    }
-}
-
-
+export * from "./page-common";
 
 interface DialogFragmentClass {
     new (owner: Page, fullscreen: boolean, shownCallback: () => void, dismissCallback: () => void): android.app.DialogFragment;
 }
 var DialogFragmentClass: DialogFragmentClass;
-    
-function ensureDialogFragmentClass() { 
+
+function ensureDialogFragmentClass() {
     if (DialogFragmentClass) {
         return;
     }
@@ -50,8 +33,8 @@ function ensureDialogFragmentClass() {
             dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
 
             // Hide actionBar and adjust alignment based on _fullscreen value.
-            this._owner.horizontalAlignment = this._fullscreen ? enums.HorizontalAlignment.stretch : enums.HorizontalAlignment.center;
-            this._owner.verticalAlignment = this._fullscreen ? enums.VerticalAlignment.stretch : enums.VerticalAlignment.center;
+            this._owner.horizontalAlignment = this._fullscreen ? "stretch" : "center";
+            this._owner.verticalAlignment = this._fullscreen ? "stretch" : "center";
             this._owner.actionBarHidden = true;
 
             dialog.setContentView(this._owner._nativeView, this._owner._nativeView.getLayoutParams());
@@ -73,7 +56,7 @@ function ensureDialogFragmentClass() {
             }
             this._shownCallback();
         }
-        
+
         public onDestroyView() {
             super.onDestroyView();
 
@@ -96,7 +79,7 @@ function ensureDialogFragmentClass() {
     DialogFragmentClass = DialogFragmentClassInner;
 }
 
-export class Page extends pageCommon.Page {
+export class Page extends PageBase {
     private _isBackNavigation = false;
     private _grid: org.nativescript.widgets.GridLayout;
 
@@ -114,27 +97,33 @@ export class Page extends pageCommon.Page {
         this._grid.addRow(new org.nativescript.widgets.ItemSpec(1, org.nativescript.widgets.GridUnitType.star));
     }
 
-    public _addViewToNativeVisualTree(child: view.View, atIndex?: number): boolean {
+    public _addViewToNativeVisualTree(child: View, atIndex?: number): boolean {
         // Set the row property for the child 
         if (this._nativeView && child._nativeView) {
-            if (child instanceof actionBar.ActionBar) {
-                gridLayout.GridLayout.setRow(child, 0);
-                child.horizontalAlignment = enums.HorizontalAlignment.stretch;
-                child.verticalAlignment = enums.VerticalAlignment.top;
+            if (child instanceof ActionBar) {
+                GridLayout.setRow(child, 0);
+                child.horizontalAlignment = "stretch";
+                child.verticalAlignment = "top";
             }
             else {
-                gridLayout.GridLayout.setRow(child, 1);
+                GridLayout.setRow(child, 1);
             }
         }
 
         return super._addViewToNativeVisualTree(child, atIndex);
     }
 
+    public onLoaded() {
+        super.onLoaded();
+        if (this.actionBarHidden !== undefined) {
+            this.updateActionBar(this.actionBarHidden);
+        }
+    }
+
     public _onDetached(force?: boolean) {
         var skipDetached = !force && this.frame.android.cachePagesOnNavigate && !this._isBackNavigation;
 
         if (skipDetached) {
-            ensureTrace();
             // Do not detach the context and android reference.
             if (trace.enabled) {
                 trace.write(`Caching ${this}`, trace.categories.NativeLifecycle);
@@ -156,8 +145,7 @@ export class Page extends pageCommon.Page {
     protected _showNativeModalView(parent: Page, context: any, closeCallback: Function, fullscreen?: boolean) {
         super._showNativeModalView(parent, context, closeCallback, fullscreen);
         if (!this.backgroundColor) {
-            ensureColor();
-            this.backgroundColor = new color.Color("White");
+            this.backgroundColor = new Color("White");
         }
 
         this._onAttached(parent._context);
@@ -181,7 +169,14 @@ export class Page extends pageCommon.Page {
         super._hideNativeModalView(parent);
     }
 
-    public _updateActionBar(hidden: boolean) {
+    private updateActionBar(hidden: boolean) {
         this.actionBar.update();
+    }
+
+    get [actionBarHiddenProperty.native](): boolean {
+        return undefined;
+    }
+    set [actionBarHiddenProperty.native](value: boolean) {
+        this.updateActionBar(value);
     }
 }

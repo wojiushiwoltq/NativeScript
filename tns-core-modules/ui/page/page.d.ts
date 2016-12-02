@@ -2,12 +2,14 @@
  * Contains the Page class, which represents a logical unit for navigation inside a Frame. 
  */
 declare module "ui/page" {
-    import observable = require("data/observable");
-    import contentView = require("ui/content-view");
-    import frame = require("ui/frame");
-    import actionBar = require("ui/action-bar");
-    import dependencyObservable = require("ui/core/dependency-observable");
-    import keyframeAnimation = require("ui/animation/keyframe-animation");
+    import { EventData } from "data/observable";
+    import { ContentView } from "ui/content-view";
+    import { Frame } from "ui/frame";
+    import { ActionBar } from "ui/action-bar";
+    import { View, Template, KeyedTemplate, Length } from "ui/core/view";
+    import { Property } from "ui/core/properties";
+    import { Color } from "color";
+    import { KeyframeAnimationInfo } from "ui/animation/keyframe-animation";
 
     //@private
     import styleScope = require("ui/styling/style-scope");
@@ -16,7 +18,7 @@ declare module "ui/page" {
     /**
      * Defines the data for the page navigation events.
      */
-    export interface NavigatedData extends observable.EventData {
+    export interface NavigatedData extends EventData {
         /**
          * The navigation context (optional, may be undefined) passed to the page navigation events method.
          */
@@ -31,7 +33,7 @@ declare module "ui/page" {
     /**
      * Defines the data for the Page.shownModally event.
      */
-    export interface ShownModallyData extends observable.EventData {
+    export interface ShownModallyData extends EventData {
         /**
          * The context (optional, may be undefined) passed to the page when shown modally.
          */
@@ -50,23 +52,7 @@ declare module "ui/page" {
     /**
      * Represents a logical unit for navigation (inside Frame).
      */
-    export class Page extends contentView.ContentView {
-        /**
-         * Dependency property that specify if page background should span under status bar.
-         */
-        public static backgroundSpanUnderStatusBarProperty: dependencyObservable.Property;
-
-        /**
-         * Dependency property used to hide the Navigation Bar in iOS and the Action Bar in Android.
-         */
-        public static actionBarHiddenProperty: dependencyObservable.Property;
-
-        /**
-         * Dependency property used to control if swipe back navigation in iOS is enabled.
-         * This property is iOS sepecific. Default value: true
-         */
-        public static enableSwipeBackNavigationProperty: dependencyObservable.Property;
-
+    export class Page extends ContentView {
         /**
          * String value used when hooking to showingModally event.
          */
@@ -132,7 +118,7 @@ declare module "ui/page" {
         /**
          * Returns a CSS keyframe animation with the specified name, if it exists.
          */
-        getKeyframeAnimationWithName(animationName: string): keyframeAnimation.KeyframeAnimationInfo;
+        getKeyframeAnimationWithName(animationName: string): KeyframeAnimationInfo;
 
         /**
          * A property that is used to pass a data from another page (while navigate to).
@@ -142,12 +128,12 @@ declare module "ui/page" {
         /**
          * Gets the Frame object controlling this instance.
          */
-        frame: frame.Frame;
+        frame: Frame;
 
         /**
          * Gets the ActionBar for this page.
          */
-        actionBar: actionBar.ActionBar;
+        actionBar: ActionBar;
 
         /**
          * A basic method signature to hook an event listener (shortcut alias to the addEventListener method).
@@ -155,7 +141,7 @@ declare module "ui/page" {
          * @param callback - Callback function which will be executed when event is raised.
          * @param thisArg - An optional parameter which will be used as `this` context for callback execution.
          */
-        on(eventNames: string, callback: (data: observable.EventData) => void, thisArg?: any): void;
+        on(eventNames: string, callback: (data: EventData) => void, thisArg?: any): void;
 
         /**
          * Raised when navigation to the page has started.
@@ -257,4 +243,20 @@ declare module "ui/page" {
         _getStyleScope(): styleScope.StyleScope;
         //@endprivate
     }
+
+    /**
+     * Dependency property that specify if page background should span under status bar.
+     */
+    export const backgroundSpanUnderStatusBarProperty: Property<Page, boolean>;
+
+    /**
+     * Dependency property used to hide the Navigation Bar in iOS and the Action Bar in Android.
+     */
+    export const actionBarHiddenProperty: Property<Page, boolean>;
+
+    /**
+     * Dependency property used to control if swipe back navigation in iOS is enabled.
+     * This property is iOS sepecific. Default value: true
+     */
+    export const enableSwipeBackNavigationProperty: Property<Page, boolean>;
 }
